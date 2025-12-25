@@ -1,0 +1,95 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: movie-platform-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: movieplatform
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - movie-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: movie-platform-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - movie-network
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: movie-platform-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      MONGO_URI: mongodb://admin:password123@mongo:27017/movieplatform?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRES_IN: 7d
+      CLIENT_URL: http://localhost:3000
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - movie-network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: movie-platform-client
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_GRAPHQL_URL: http://localhost:4000/graphql
+      NEXT_PUBLIC_WS_URL: ws://localhost:4000/graphql
+    depends_on:
+      - api
+    networks:
+      - movie-network
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+
+networks:
+  movie-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+
