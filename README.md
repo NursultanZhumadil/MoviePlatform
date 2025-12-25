@@ -195,10 +195,14 @@ npm run lint
 
 ## 👥 Команда
 
-- [Студент 1 аты] - Backend, GraphQL, Database
-- [Студент 2 аты] - Frontend, UI/UX, State Management
+- [Zhumadil Nursultan] - Backend, GraphQL, Database
+- [Tanirbergenov Turlykhan] - Frontend, UI/UX, State Management
 
 ## 🔗 Демо сілтемелері
+
+GitHub: https://github.com/NursultanZhumadil/MoviePlatform
+Presentation: https://www.canva.com/design/DAG8eklmQng/wbqVEscS9b87vwe5WNoIHg/edit
+
 
 ### Production
 - Frontend: [URL]
